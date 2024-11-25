@@ -3,6 +3,9 @@ import { RealtimeClient } from '../src/lib/realtime-api-beta/index.js';
 import express from 'express';
 import http from 'http';
 import dotenv from 'dotenv';
+import path from 'path';
+import { fileURLToPath } from 'url';
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 dotenv.config();
 
 const app = express();
@@ -103,32 +106,50 @@ class RealtimeRelay {
   }
 
   listen(port) {
-    // Add CORS middleware with more specific origins in production
+    // Add CORS and basic middleware
     app.use((req, res, next) => {
-      const allowedOrigins = [
-        'https://' + process.env.REPL_SLUG + '.replit.app',
-        'http://localhost:3000'
-      ];
+      // Log all requests to help debug
+      console.log(`[HTTP] ${req.method} ${req.url}`);
       
+      const allowedOrigins = isProd
+        ? ['https://' + process.env.REPL_SLUG + '.replit.app']
+        : ['*'];
+
       const origin = req.headers.origin;
-      if (allowedOrigins.includes(origin)) {
+      if (allowedOrigins.includes('*') || allowedOrigins.includes(origin)) {
         res.header('Access-Control-Allow-Origin', origin);
       }
-      
       res.header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-      res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization');
-      res.header('Access-Control-Allow-Credentials', 'true');
-      
-      if (req.method === 'OPTIONS') {
-        return res.sendStatus(200);
-      }
-      
-      console.log(`[${new Date().toISOString()}] ${req.method} ${req.url} from ${req.headers.origin}`);
+      res.header('Access-Control-Allow-Headers', '*');
+      next();
+    });
+
+    // Explicitly set content types for JavaScript and CSS files
+    app.get('*.js', (req, res, next) => {
+      res.type('application/javascript');
+      next();
+    });
+
+    app.get('*.css', (req, res, next) => {
+      res.type('text/css');
       next();
     });
 
     // Serve static files from the build directory
-    app.use(express.static('build'));
+    app.use(express.static(path.join(__dirname, '../build'), {
+      setHeaders: (res, path) => {
+        if (path.endsWith('.js')) {
+          res.setHeader('Content-Type', 'application/javascript');
+        } else if (path.endsWith('.css')) {
+          res.setHeader('Content-Type', 'text/css');
+        }
+      }
+    }));
+
+    // Add SPA routing
+    app.get('*', (req, res) => {
+      res.sendFile(path.join(__dirname, '../build/index.html'));
+    });
 
     // Health check endpoints
     app.get('/ws', (req, res) => {
@@ -152,23 +173,7 @@ class RealtimeRelay {
       clientTracking: true,
     });
 
-    this.wss.on('error', (error) => {
-      console.error('[WebSocket Error]', error);
-    });
-
-    this.wss.on('connection', (ws, req) => {
-      console.log(`[WebSocket] New connection from ${req.headers.origin}`);
-      
-      ws.on('error', (error) => {
-        console.error('[WebSocket Client Error]', error);
-      });
-      
-      ws.on('close', () => {
-        console.log('[WebSocket] Client disconnected');
-      });
-      
-      this.connectionHandler(ws, req);
-    });
+    this.wss.on('connection', this.connectionHandler);
 
     // Add error handling for the server
     server.on('error', (error) => {
