@@ -108,7 +108,33 @@ class RealtimeRelay {
   listen(port) {
     // Add CORS and basic middleware
     app.use((req, res, next) => {
-      console.log(`[${new Date().toISOString()}] ${req.method} ${req.url} from ${req.headers.origin}`);
+      // Log all requests to help debug
+      console.log(`[HTTP] ${req.method} ${req.url}`);
+      
+      const allowedOrigins = isProd
+        ? ['https://' + process.env.REPL_SLUG + '.replit.app']
+        : ['*'];
+
+      const origin = req.headers.origin;
+      if (allowedOrigins.includes('*') || allowedOrigins.includes(origin)) {
+        res.header('Access-Control-Allow-Origin', origin);
+      }
+      res.header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+      res.header('Access-Control-Allow-Headers', '*');
+      next();
+    });
+
+    // Serve static files from the build directory
+    app.use(express.static(path.join(__dirname, '../build')));
+
+    // Add SPA routing - this is crucial for React routing
+    app.get('*', (req, res) => {
+      res.sendFile(path.join(__dirname, '../build/index.html'));
+    });
+
+    // Log all requests to help debug
+    app.use((req, res, next) => {
+      console.log(`[HTTP] ${req.method} ${req.url} - ${res.statusCode}`);
       next();
     });
 
@@ -124,9 +150,13 @@ class RealtimeRelay {
     });
 
     // Serve static files from the build directory
-    app.use(express.static('build', {
+    app.use(express.static(path.join(__dirname, '../build'), {
       setHeaders: (res, path) => {
-        console.log(`[Static] Serving: ${path}`);
+        if (path.endsWith('.js')) {
+          res.setHeader('Content-Type', 'application/javascript');
+        } else if (path.endsWith('.css')) {
+          res.setHeader('Content-Type', 'text/css');
+        }
       }
     }));
 
@@ -144,10 +174,6 @@ class RealtimeRelay {
       res.send('Relay server running');
     });
 
-    app.get('/health', (req, res) => {
-      res.send('OK');
-    });
-
     // Initialize WebSocket server with enhanced configuration
     this.wss = new WebSocketServer({
       server,
@@ -157,7 +183,16 @@ class RealtimeRelay {
       clientTracking: true,
     });
 
-    this.wss.on('connection', this.connectionHandler);
+    // Add connection logging
+    this.wss.on('connection', (ws, req) => {
+      console.log(`[WebSocket] New connection from ${req.headers.origin}`);
+      this.connectionHandler(ws, req);
+    });
+
+    // Add error logging
+    this.wss.on('error', (error) => {
+      console.error('[WebSocket Server Error]', error);
+    });
 
     // Add error handling for the server
     server.on('error', (error) => {

@@ -1,11 +1,12 @@
+import { ErrorBoundary } from './components/ErrorBoundary';
 import { ConsolePage } from './pages/ConsolePage';
 import './App.scss';
 
 function App() {
   return (
-    <div data-component="App">
+    <ErrorBoundary>
       <ConsolePage />
-    </div>
+    </ErrorBoundary>
   );
 }
 

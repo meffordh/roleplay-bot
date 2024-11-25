@@ -5,14 +5,10 @@
  *
  * Simply switch the lines by commenting one and removing the other
  */
-// const USE_LOCAL_RELAY_SERVER_URL: string | undefined = 'http://localhost:8081';
-// Update the WebSocket URL to match the deployed port
-// To this:
-// To this:
 const USE_LOCAL_RELAY_SERVER_URL: string | undefined =
   window.location.hostname.includes('replit.app')
-    ? `wss://${window.location.hostname}`
-    : 'ws://localhost:8081';
+    ? `wss://${window.location.hostname}/ws`
+    : 'ws://localhost:8081/ws';
 
 import { useEffect, useRef, useCallback, useState } from 'react';
 import { RealtimeClient } from '../lib/realtime-api-beta/index.js';
@@ -64,6 +60,7 @@ interface RealtimeEvent {
 }
 
 export function ConsolePage() {
+  console.log('ConsolePage component mounting');
   /**
    * Ask user for API Key
    * If we're using the local relay server, we don't need this
@@ -507,6 +504,12 @@ export function ConsolePage() {
       // cleanup; resets to defaults
       client.reset();
     };
+  }, []);
+
+  useEffect(() => {
+    console.log('WebSocket URL:', USE_LOCAL_RELAY_SERVER_URL);
+    console.log('Hostname:', window.location.hostname);
+    console.log('Protocol:', window.location.protocol);
   }, []);
 
   /**
