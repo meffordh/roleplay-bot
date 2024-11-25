@@ -20,14 +20,22 @@ import { ItemType } from '../lib/realtime-api-beta/dist/lib/client.js';
 import { WavRecorder, WavStreamPlayer } from '../lib/wavtools/index.js';
 import { instructions } from '../utils/conversation_config.js';
 import { WavRenderer } from '../utils/wav_renderer';
+import { scenarios, getScenarioInstructions } from '../utils/scenario_config';
 
-import { X, Edit, Zap, ArrowUp, ArrowDown } from 'react-feather';
-import { Button } from '../components/button/Button';
-import { Toggle } from '../components/toggle/Toggle';
-import { Map } from '../components/Map';
+// Components
+import { NavBar } from '../components/NavBar';
+import { ScenarioCard } from '../components/ScenarioCard';
+import { ChatTranscript } from '../components/ChatTranscript';
+import { ControlPanel } from '../components/ControlPanel';
+import { LibraryDialog } from '../components/LibraryDialog';
+import { SubmitDialog } from '../components/SubmitDialog';
+
+// Icons
+import { Mic, Power, X, Zap } from 'react-feather';
 
 import './ConsolePage.scss';
 import { isJsxOpeningLikeElement } from 'typescript';
+import { LocationMap } from '../components/Map.js';
 
 /**
  * Type for result from get_weather() function call
@@ -506,236 +514,63 @@ export function ConsolePage() {
    * Render the application
    */
   return (
-    <div data-component="ConsolePage">
-      <div className="content-top">
-        <div className="content-title">
-          <img src="/openai-logomark.svg" alt="OpenAI Logo" />
-          <span>realtime console</span>
-        </div>
-        <div className="content-api-key">
-          {!USE_LOCAL_RELAY_SERVER_URL && (
-            <Button
-              icon={Edit}
-              iconPosition="end"
-              buttonStyle="flush"
-              label={`api key: ${apiKey.slice(0, 3)}...`}
-              onClick={() => resetAPIKey()}
-            />
-          )}
-        </div>
-      </div>
-      <div className="content-main">
-        <div className="content-logs">
-          <div className="content-block events">
-            <div className="visualization">
-              <div className="visualization-entry client" key="client-vis">
-                <canvas ref={clientCanvasRef} />
-              </div>
-              <div className="visualization-entry server" key="server-vis">
-                <canvas ref={serverCanvasRef} />
-              </div>
-            </div>
-            <div className="content-block-title">events</div>
-            <div className="content-block-body" ref={eventsScrollRef}>
-              {!realtimeEvents.length && `awaiting connection...`}
-              {realtimeEvents.map((realtimeEvent, i) => {
-                const count = realtimeEvent.count;
-                const event = { ...realtimeEvent.event };
+    <div className="flex flex-col h-screen bg-white">
+      <NavBar>
+        <LibraryDialog 
+          onSelect={(id) => {
+            const instructions = getScenarioInstructions(id);
+            clientRef.current.updateSession({ instructions });
+          }} 
+        />
+        <SubmitDialog />
+      </NavBar>
 
-                // Handle different event types
-                if (event.type === 'input_audio_buffer.append') {
-                  event.audio = `[trimmed: ${event.audio.length} bytes]`;
-                } else if (event.type === 'response.audio.delta') {
-                  event.delta = `[trimmed: ${event.delta.length} bytes]`;
-                }
-
-                return (
-                  <div
-                    className="event"
-                    key={`${event.event_id || i}-${realtimeEvent.time}`}
-                  >
-                    <div className="event-timestamp" key={`timestamp-${i}`}>
-                      {formatTime(realtimeEvent.time)}
-                    </div>
-                    <div className="event-details" key={`details-${i}`}>
-                      <div
-                        className="event-summary"
-                        key={`summary-${i}`}
-                        onClick={() => {
-                          const id = event.event_id;
-                          const expanded = { ...expandedEvents };
-                          if (expanded[id]) {
-                            delete expanded[id];
-                          } else {
-                            expanded[id] = true;
-                          }
-                          setExpandedEvents(expanded);
-                        }}
-                      >
-                        <div
-                          className={`event-source ${event.type === 'error' ? 'error' : realtimeEvent.source}`}
-                          key={`source-${i}`}
-                        >
-                          {realtimeEvent.source === 'client' ? (
-                            <ArrowUp key={`arrow-${i}`} />
-                          ) : (
-                            <ArrowDown key={`arrow-${i}`} />
-                          )}
-                          <span key={`source-text-${i}`}>
-                            {event.type === 'error'
-                              ? 'error!'
-                              : realtimeEvent.source}
-                          </span>
-                        </div>
-                        <div className="event-type" key={`type-${i}`}>
-                          {event.type}
-                          {count && ` (${count})`}
-                        </div>
-                      </div>
-                      {!!expandedEvents[event.event_id] && (
-                        <div
-                          className="event-payload"
-                          key={`payload-${event.event_id}`}
-                        >
-                          {JSON.stringify(event, null, 2)}
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                );
-              })}
-              {items.map((conversationItem, i) => (
-                <div
-                  className="conversation-item"
-                  key={`conv-${conversationItem.id}-${i}`}
-                >
-                  <div className={`speaker ${conversationItem.role || ''}`}>
-                    <div key={`speaker-text-${i}`}>
-                      {(
-                        conversationItem.role || conversationItem.type
-                      ).replaceAll('_', ' ')}
-                    </div>
-                    <div
-                      className="close"
-                      onClick={() =>
-                        deleteConversationItem(conversationItem.id)
-                      }
-                      key={`close-${i}`}
-                    >
-                      <X />
-                    </div>
-                  </div>
-                  <div
-                    className={`speaker-content`}
-                    key={`content-${conversationItem.id}`}
-                  >
-                    {/* tool response */}
-                    {conversationItem.type === 'function_call_output' && (
-                      <div key={`tool-response-${i}`}>
-                        {conversationItem.formatted.output}
-                      </div>
-                    )}
-                    {/* tool call */}
-                    {!!conversationItem.formatted.tool && (
-                      <div key={`tool-call-${i}`}>
-                        {conversationItem.formatted.tool.name}(
-                        {conversationItem.formatted.tool.arguments})
-                      </div>
-                    )}
-                    {!conversationItem.formatted.tool &&
-                      conversationItem.role === 'user' && (
-                        <div key={`user-content-${i}`}>
-                          {conversationItem.formatted.transcript ||
-                            (conversationItem.formatted.audio?.length
-                              ? '(awaiting transcript)'
-                              : conversationItem.formatted.text ||
-                                '(item sent)')}
-                        </div>
-                      )}
-                    {!conversationItem.formatted.tool &&
-                      conversationItem.role === 'assistant' && (
-                        <div key={`assistant-content-${i}`}>
-                          {conversationItem.formatted.transcript ||
-                            conversationItem.formatted.text ||
-                            '(truncated)'}
-                        </div>
-                      )}
-                    {conversationItem.formatted.file && (
-                      <audio
-                        src={conversationItem.formatted.file.url}
-                        controls
-                        key={`audio-${conversationItem.id}`}
-                      />
-                    )}
-                  </div>
+      <div className="grid grid-cols-3 gap-6 p-6" style={{ height: "calc(100vh - 130px)" }}>
+        <div className="col-span-2 border border-border/40 bg-background">
+          <ChatTranscript 
+            items={items.filter(item => item.role)} 
+            onDeleteItem={deleteConversationItem} 
+          />
+        </div>
+        <canvas ref={clientCanvasRef} />
+        <div className="space-y-6">
+          <ScenarioCard currentInstructions={instructions} />
+          <canvas ref={serverCanvasRef} />
+          <div className="border border-border/40 bg-background p-4">
+            <h3 className="font-medium mb-3">Map View</h3>
+            {coords && (
+              <div className="w-full h-40 bg-gray-50 border border-gray-100">
+                <div className="w-full h-full">
+                  <LocationMap
+                    center={[coords.lat, coords.lng]}
+                    location={coords.location}
+                  />
                 </div>
-              ))}
-            </div>
-          </div>
-          <div className="content-actions">
-            <Toggle
-              defaultValue={false}
-              labels={['manual', 'vad']}
-              values={['none', 'server_vad']}
-              onChange={(_, value) => changeTurnEndType(value)}
-            />
-            <div className="spacer" />
-            {isConnected && canPushToTalk && (
-              <Button
-                label={isRecording ? 'release to send' : 'push to talk'}
-                buttonStyle={isRecording ? 'alert' : 'regular'}
-                disabled={!isConnected || !canPushToTalk}
-                onMouseDown={startRecording}
-                onMouseUp={stopRecording}
-              />
+              </div>
             )}
-            <div className="spacer" />
-            <Button
-              label={isConnected ? 'disconnect' : 'connect'}
-              iconPosition={isConnected ? 'end' : 'start'}
-              icon={isConnected ? X : Zap}
-              buttonStyle={isConnected ? 'regular' : 'action'}
-              onClick={
-                isConnected ? disconnectConversation : connectConversation
-              }
-            />
           </div>
-        </div>
-        <div className="content-right">
-          <div className="content-block map">
-            <div className="content-block-title">get_weather()</div>
-            <div className="content-block-title bottom">
-              {marker?.location || 'not yet retrieved'}
-              {!!marker?.temperature && (
-                <>
-                  <br />
-                  🌡️ {marker.temperature.value} {marker.temperature.units}
-                </>
-              )}
-              {!!marker?.wind_speed && (
-                <>
-                  {' '}
-                  🍃 {marker.wind_speed.value} {marker.wind_speed.units}
-                </>
-              )}
-            </div>
-            <div className="content-block-body full">
-              {coords && (
-                <Map
-                  center={[coords.lat, coords.lng]}
-                  location={coords.location}
-                />
-              )}
-            </div>
-          </div>
-          <div className="content-block kv">
-            <div className="content-block-title">set_memory()</div>
-            <div className="content-block-body content-kv">
-              {JSON.stringify(memoryKv, null, 2)}
+          <div className="border border-border/40 bg-background p-4">
+            <h3 className="font-medium mb-3">Set Memory</h3>
+            <div className="w-full h-40 bg-gray-50 border border-gray-100 p-4 overflow-auto">
+              <pre className="text-sm text-muted-foreground">
+                {JSON.stringify(memoryKv, null, 2)}
+              </pre>
             </div>
           </div>
         </div>
       </div>
+
+      <ControlPanel 
+        isConnected={isConnected}
+        isRecording={isRecording}
+        canPushToTalk={canPushToTalk}
+        onVadToggle={changeTurnEndType}
+        onStartRecording={startRecording}
+        onStopRecording={stopRecording}
+        onDisconnect={isConnected ? disconnectConversation : connectConversation}
+        clientCanvasRef={clientCanvasRef}
+        serverCanvasRef={serverCanvasRef}
+      />
     </div>
   );
 }

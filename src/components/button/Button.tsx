@@ -1,50 +1,34 @@
-import React from 'react';
-import './Button.scss';
-
+import { ButtonHTMLAttributes } from 'react';
 import { Icon } from 'react-feather';
 
-interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
-  label?: string;
+interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
+  label: string;
   icon?: Icon;
-  iconPosition?: 'start' | 'end';
-  iconColor?: 'red' | 'green' | 'grey';
-  iconFill?: boolean;
-  buttonStyle?: 'regular' | 'action' | 'alert' | 'flush';
+  buttonStyle?: 'regular' | 'action' | 'alert' | 'outline';
+  description?: string;
 }
 
-export function Button({
-  label = 'Okay',
-  icon = void 0,
-  iconPosition = 'start',
-  iconColor = void 0,
-  iconFill = false,
-  buttonStyle = 'regular',
-  ...rest
+export function Button({ 
+  label, 
+  icon: Icon, 
+  buttonStyle = 'regular', 
+  description,
+  className = '',
+  ...props 
 }: ButtonProps) {
-  const StartIcon = iconPosition === 'start' ? icon : null;
-  const EndIcon = iconPosition === 'end' ? icon : null;
-  const classList = [];
-  if (iconColor) {
-    classList.push(`icon-${iconColor}`);
-  }
-  if (iconFill) {
-    classList.push(`icon-fill`);
-  }
-  classList.push(`button-style-${buttonStyle}`);
-
   return (
-    <button data-component="Button" className={classList.join(' ')} {...rest}>
-      {StartIcon && (
-        <span className="icon icon-start">
-          <StartIcon />
-        </span>
-      )}
-      <span className="label">{label}</span>
-      {EndIcon && (
-        <span className="icon icon-end">
-          <EndIcon />
-        </span>
-      )}
+    <button
+      data-component="Button"
+      className={`button-style-${buttonStyle} ${className}`}
+      {...props}
+    >
+      {Icon && <Icon className="w-4 h-4" />}
+      <div className="flex flex-col items-start">
+        <span>{label}</span>
+        {description && (
+          <span className="text-sm text-muted-foreground">{description}</span>
+        )}
+      </div>
     </button>
   );
 }
