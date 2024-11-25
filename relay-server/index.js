@@ -108,19 +108,7 @@ class RealtimeRelay {
   listen(port) {
     // Add CORS and basic middleware
     app.use((req, res, next) => {
-      // Log all requests to help debug
-      console.log(`[HTTP] ${req.method} ${req.url}`);
-      
-      const allowedOrigins = isProd
-        ? ['https://' + process.env.REPL_SLUG + '.replit.app']
-        : ['*'];
-
-      const origin = req.headers.origin;
-      if (allowedOrigins.includes('*') || allowedOrigins.includes(origin)) {
-        res.header('Access-Control-Allow-Origin', origin);
-      }
-      res.header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-      res.header('Access-Control-Allow-Headers', '*');
+      console.log(`[${new Date().toISOString()}] ${req.method} ${req.url} from ${req.headers.origin}`);
       next();
     });
 
@@ -136,13 +124,9 @@ class RealtimeRelay {
     });
 
     // Serve static files from the build directory
-    app.use(express.static(path.join(__dirname, '../build'), {
+    app.use(express.static('build', {
       setHeaders: (res, path) => {
-        if (path.endsWith('.js')) {
-          res.setHeader('Content-Type', 'application/javascript');
-        } else if (path.endsWith('.css')) {
-          res.setHeader('Content-Type', 'text/css');
-        }
+        console.log(`[Static] Serving: ${path}`);
       }
     }));
 
