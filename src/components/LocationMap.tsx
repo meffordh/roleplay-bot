@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'react';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
-import './Map.scss';
+import './LocationMap.scss';
 
 interface LocationMapProps {
   center: [number, number];
@@ -17,7 +17,9 @@ export function LocationMap({ center, location }: LocationMapProps) {
 
     if (!mapRef.current) {
       mapRef.current = L.map(containerRef.current).setView(center, 13);
-      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(mapRef.current);
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(
+        mapRef.current,
+      );
     } else {
       mapRef.current.setView(center);
     }

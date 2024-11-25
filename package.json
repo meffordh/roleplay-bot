@@ -41,7 +41,8 @@
     "eject": "react-scripts eject",
     "relay": "node ./relay-server/index.js",
     "relay:dev": "nodemon ./relay-server/index.js",
-    "dev": "concurrently 'npm run start' 'npm run relay:dev'"
+    "dev": "concurrently 'npm run start' 'npm run relay:dev'",
+    "deploy": "npm run build && npm run relay"
   },
   "eslintConfig": {
     "extends": [

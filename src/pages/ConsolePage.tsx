@@ -10,9 +10,9 @@
 // To this:
 // To this:
 const USE_LOCAL_RELAY_SERVER_URL: string | undefined =
-  window.location.hostname.includes('replit.app') // Changed from replit.dev to replit.app
-    ? `wss://${window.location.hostname}/ws` // Removed :8081 as port is handled by Replit
-    : 'ws://localhost:8081/ws'; // Local development URL
+  window.location.hostname.includes('replit.app')
+    ? `wss://${window.location.hostname}`
+    : 'ws://localhost:8081';
 
 import { useEffect, useRef, useCallback, useState } from 'react';
 import { RealtimeClient } from '../lib/realtime-api-beta/index.js';
@@ -35,8 +35,7 @@ import { Mic, Power, X, Zap } from 'react-feather';
 
 import './ConsolePage.scss';
 import { isJsxOpeningLikeElement } from 'typescript';
-import { LocationMap } from '../components/Map.js';
-
+import { LocationMap } from '../components/LocationMap';
 /**
  * Type for result from get_weather() function call
  */
@@ -574,3 +573,4 @@ export function ConsolePage() {
     </div>
   );
 }
+

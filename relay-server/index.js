@@ -105,16 +105,25 @@ class RealtimeRelay {
   listen(port) {
     // Add CORS middleware with more specific origins in production
     app.use((req, res, next) => {
-      const allowedOrigins = isProd
-        ? ['https://' + process.env.REPL_SLUG + '.replit.app']
-        : ['*'];
-
+      const allowedOrigins = [
+        'https://' + process.env.REPL_SLUG + '.replit.app',
+        'http://localhost:3000'
+      ];
+      
       const origin = req.headers.origin;
-      if (allowedOrigins.includes('*') || allowedOrigins.includes(origin)) {
+      if (allowedOrigins.includes(origin)) {
         res.header('Access-Control-Allow-Origin', origin);
       }
+      
       res.header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-      res.header('Access-Control-Allow-Headers', '*');
+      res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+      res.header('Access-Control-Allow-Credentials', 'true');
+      
+      if (req.method === 'OPTIONS') {
+        return res.sendStatus(200);
+      }
+      
+      console.log(`[${new Date().toISOString()}] ${req.method} ${req.url} from ${req.headers.origin}`);
       next();
     });
 
@@ -143,7 +152,23 @@ class RealtimeRelay {
       clientTracking: true,
     });
 
-    this.wss.on('connection', this.connectionHandler);
+    this.wss.on('error', (error) => {
+      console.error('[WebSocket Error]', error);
+    });
+
+    this.wss.on('connection', (ws, req) => {
+      console.log(`[WebSocket] New connection from ${req.headers.origin}`);
+      
+      ws.on('error', (error) => {
+        console.error('[WebSocket Client Error]', error);
+      });
+      
+      ws.on('close', () => {
+        console.log('[WebSocket] Client disconnected');
+      });
+      
+      this.connectionHandler(ws, req);
+    });
 
     // Add error handling for the server
     server.on('error', (error) => {
