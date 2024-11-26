@@ -29,12 +29,12 @@ export function LibraryDialog({ onSelect, currentScenarioId, children }: Library
               <Button
                 key={scenario.id}
                 variant="outline"
-                className="w-full justify-between h-auto items-start p-4 gap-2 relative group"
+                className="w-full justify-between h-auto items-start p-4 gap-2 relative group text-left"
                 onClick={() => onSelect(scenario.id)}
               >
-                <div className="flex flex-col items-start">
+                <div className="flex flex-col items-start w-[90%]">
                   <div className="font-semibold">{scenario.title}</div>
-                  <div className="text-sm text-muted-foreground text-left">
+                  <div className="text-sm text-muted-foreground break-words">
                     {scenario.description}
                   </div>
                 </div>
