@@ -572,9 +572,9 @@ export function ConsolePage() {
         currentScenarioId={currentScenarioId}
       />
 
-      <div className="grid grid-cols-3 gap-6 p-6 overflow-hidden" style={{ height: "calc(100vh - 130px)" }}>
-        <div className="col-span-2 flex flex-col">
-          <div className="flex-1 border border-border/40 bg-background overflow-hidden">
+      <div className="grid grid-cols-3 gap-6 p-6 h-[calc(100vh-130px)]">
+        <div className="col-span-2">
+          <div className="h-full border border-border/40 bg-background">
             <ChatTranscript 
               items={items.filter(item => item.role)} 
               onDeleteItem={deleteConversationItem} 

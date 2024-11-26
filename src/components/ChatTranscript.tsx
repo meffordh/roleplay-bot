@@ -9,8 +9,8 @@ interface ChatTranscriptProps {
 
 export function ChatTranscript({ items, onDeleteItem }: ChatTranscriptProps) {
   return (
-    <div className="h-full flex flex-col overflow-hidden">
-      <div className="flex-1 overflow-y-auto px-6">
+    <ScrollArea className="h-full">
+      <div className="px-6">
         <div className="space-y-8 py-6">
           {items.map((item, index) => {
             const isUser = item.role === 'user';
@@ -41,6 +41,6 @@ export function ChatTranscript({ items, onDeleteItem }: ChatTranscriptProps) {
           })}
         </div>
       </div>
-    </div>
+    </ScrollArea>
   );
 }
