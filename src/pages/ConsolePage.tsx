@@ -512,21 +512,43 @@ export function ConsolePage() {
     console.log('Protocol:', window.location.protocol);
   }, []);
 
+  // Add new state for current scenario
+  const [currentScenarioId, setCurrentScenarioId] = useState(1);
+
+  // Update the scenario selection handler
+  const handleScenarioSelect = useCallback(async (id: number) => {
+    const client = clientRef.current;
+    
+    // Disconnect current conversation
+    setIsConnected(false);
+    setRealtimeEvents([]);
+    setItems([]);
+    setMemoryKv({});
+    client.disconnect();
+    
+    // Update scenario
+    setCurrentScenarioId(id);
+    const instructions = getScenarioInstructions(id);
+    await client.updateSession({ instructions });
+    
+    // Reconnect with new scenario
+    client.connect();
+    setIsConnected(true);
+  }, []);
+
   /**
    * Render the application
    */
   return (
     <div className="flex flex-col h-screen bg-white">
       <NavBar 
-        onLibrarySelect={(id) => {
-          const instructions = getScenarioInstructions(id);
-          clientRef.current.updateSession({ instructions });
-        }} 
+        onLibrarySelect={handleScenarioSelect}
+        currentScenarioId={currentScenarioId}
       />
 
       <div className="grid grid-cols-3 gap-6 p-6" style={{ height: "calc(100vh - 130px)" }}>
         <div className="col-span-2 flex flex-col">
-          <div className="flex-1 border border-border/40 bg-background">
+          <div className="flex-1 border border-border/40 bg-background overflow-hidden">
             <ChatTranscript 
               items={items.filter(item => item.role)} 
               onDeleteItem={deleteConversationItem} 
@@ -534,7 +556,10 @@ export function ConsolePage() {
           </div>
         </div>
         <div className="space-y-6">
-          <ScenarioCard currentInstructions={instructions} />
+          <ScenarioCard 
+            currentInstructions={instructions} 
+            currentScenarioId={currentScenarioId}
+          />
           <div className="border border-border/40 bg-background p-4 relative z-10">
             <h3 className="font-medium mb-3">Map View</h3>
             {coords && (

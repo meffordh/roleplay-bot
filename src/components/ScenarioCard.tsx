@@ -1,18 +1,13 @@
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
-import { useEffect, useState } from 'react';
 import { scenarios } from '../utils/scenario_config';
 
 interface ScenarioCardProps {
-  currentInstructions: string;
+  currentScenarioId: number;
+  currentInstructions?: string;
 }
 
-export function ScenarioCard({ currentInstructions }: ScenarioCardProps) {
-  const [currentScenario, setCurrentScenario] = useState(scenarios[0]);
-
-  useEffect(() => {
-    const scenario = scenarios.find(s => s.instruction === currentInstructions) || scenarios[0];
-    setCurrentScenario(scenario);
-  }, [currentInstructions]);
+export function ScenarioCard({ currentScenarioId, currentInstructions }: ScenarioCardProps) {
+  const currentScenario = scenarios.find(s => s.id === currentScenarioId) || scenarios[0];
 
   return (
     <div className="border border-border/40 bg-background rounded-lg overflow-hidden">
