@@ -34,13 +34,6 @@ export function ChatTranscript({ items, onDeleteItem }: ChatTranscriptProps) {
                 >
                   <X className="w-3 h-3" />
                 </button>
-                {item.formatted.file && (
-                  <audio
-                    src={item.formatted.file.url}
-                    controls
-                    className="w-full"
-                  />
-                )}
               </div>
             </div>
           );
