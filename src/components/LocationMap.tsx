@@ -24,17 +24,20 @@ export function LocationMap({ center, location }: LocationMapProps) {
     if (!containerRef.current) return;
 
     if (!mapRef.current) {
-      mapRef.current = L.map(containerRef.current).setView(center, 13);
-      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(
-        mapRef.current,
-      );
-    } else {
-      mapRef.current.setView(center);
-    }
+      mapRef.current = L.map(containerRef.current, {
+        zoomControl: true,
+        attributionControl: true,
+        fadeAnimation: false,
+        zoomAnimation: false
+      }).setView(center, 13);
 
-    const marker = L.marker(center).addTo(mapRef.current);
-    if (location) {
-      marker.bindPopup(location).openPopup();
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '© OpenStreetMap contributors'
+      }).addTo(mapRef.current);
+    } else {
+      mapRef.current.setView(center, mapRef.current.getZoom(), {
+        animate: false
+      });
     }
 
     return () => {
@@ -43,7 +46,15 @@ export function LocationMap({ center, location }: LocationMapProps) {
         mapRef.current = null;
       }
     };
-  }, [center, location]);
+  }, []);
+
+  useEffect(() => {
+    if (mapRef.current) {
+      mapRef.current.setView(center, mapRef.current.getZoom(), {
+        animate: false
+      });
+    }
+  }, [center]);
 
   return <div ref={containerRef} data-component="Map" />;
 }
