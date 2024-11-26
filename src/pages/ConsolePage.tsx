@@ -541,7 +541,7 @@ export function ConsolePage() {
           <div className="border border-border/40 bg-background p-4">
             <h3 className="font-medium mb-3">Map View</h3>
             {coords && (
-              <div className="w-full h-40 bg-gray-50 border border-gray-100">
+              <div className="relative w-full h-[300px]">
                 <LocationMap
                   center={[coords.lat, coords.lng]}
                   location={coords.location}
