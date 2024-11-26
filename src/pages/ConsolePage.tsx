@@ -517,15 +517,12 @@ export function ConsolePage() {
    */
   return (
     <div className="flex flex-col h-screen bg-white">
-      <NavBar>
-        <LibraryDialog 
-          onSelect={(id) => {
-            const instructions = getScenarioInstructions(id);
-            clientRef.current.updateSession({ instructions });
-          }} 
-        />
-        <SubmitDialog />
-      </NavBar>
+      <NavBar 
+        onLibrarySelect={(id) => {
+          const instructions = getScenarioInstructions(id);
+          clientRef.current.updateSession({ instructions });
+        }} 
+      />
 
       <div className="grid grid-cols-3 gap-6 p-6" style={{ height: "calc(100vh - 130px)" }}>
         <div className="col-span-2 flex flex-col">
@@ -538,10 +535,10 @@ export function ConsolePage() {
         </div>
         <div className="space-y-6">
           <ScenarioCard currentInstructions={instructions} />
-          <div className="border border-border/40 bg-background p-4">
+          <div className="border border-border/40 bg-background p-4 relative z-10">
             <h3 className="font-medium mb-3">Map View</h3>
             {coords && (
-              <div className="relative w-full h-[300px]">
+              <div className="relative w-full h-[300px] z-0">
                 <LocationMap
                   center={[coords.lat, coords.lng]}
                   location={coords.location}

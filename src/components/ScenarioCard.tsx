@@ -15,16 +15,14 @@ export function ScenarioCard({ currentInstructions }: ScenarioCardProps) {
   }, [currentInstructions]);
 
   return (
-    <div className="card">
-      <CardHeader className="pb-2">
-        <CardTitle className="text-base font-medium">Current Scenario</CardTitle>
-      </CardHeader>
-      <CardContent>
-        <h3 className="font-medium mb-2">{currentScenario.title}</h3>
-        <p className="text-sm text-muted-foreground">
-          {currentScenario.description}
-        </p>
-      </CardContent>
+    <div className="border border-border/40 bg-background rounded-lg overflow-hidden">
+      <div className="p-4 border-b border-border/40">
+        <h3 className="font-medium">Current Scenario</h3>
+      </div>
+      <div className="p-4">
+        <h4 className="font-medium mb-2">{currentScenario.title}</h4>
+        <p className="text-sm text-muted-foreground">{currentScenario.description}</p>
+      </div>
     </div>
   );
 } 

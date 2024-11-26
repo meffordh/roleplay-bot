@@ -1,9 +1,13 @@
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from './ui/dialog';
-import { Button } from './button/Button';
-import { Send } from 'react-feather';
+import { Button } from './ui/button';
+import { Send } from 'lucide-react';
 import { useState } from 'react';
 
-export function SubmitDialog() {
+interface SubmitDialogProps {
+  children: React.ReactNode;
+}
+
+export function SubmitDialog({ children }: SubmitDialogProps) {
   const [email, setEmail] = useState('');
 
   const handleSubmit = async () => {
@@ -14,12 +18,7 @@ export function SubmitDialog() {
   return (
     <Dialog>
       <DialogTrigger asChild>
-        <Button
-          label="Submit"
-          icon={Send}
-          buttonStyle="regular"
-          className="border-purple-200"
-        />
+        {children}
       </DialogTrigger>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
@@ -37,11 +36,12 @@ export function SubmitDialog() {
             className="w-full p-2 border border-gray-200 rounded"
           />
           <Button
-            label="Submit"
-            buttonStyle="action"
+            variant="default"
             onClick={handleSubmit}
             disabled={!email}
-          />
+          >
+            Submit
+          </Button>
         </div>
       </DialogContent>
     </Dialog>

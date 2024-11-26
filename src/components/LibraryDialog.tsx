@@ -5,16 +5,14 @@ import { Scenario, scenarios } from '../utils/scenario_config';
 
 interface LibraryDialogProps {
   onSelect: (id: number) => void;
+  children: React.ReactNode;
 }
 
-export function LibraryDialog({ onSelect }: LibraryDialogProps) {
+export function LibraryDialog({ onSelect, children }: LibraryDialogProps) {
   return (
     <Dialog>
       <DialogTrigger asChild>
-        <Button size="sm" variant="outline">
-          <Library className="w-4 h-4 mr-2" />
-          Library
-        </Button>
+        {children}
       </DialogTrigger>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
