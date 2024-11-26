@@ -14,7 +14,6 @@ import { useEffect, useRef, useCallback, useState } from 'react';
 import { RealtimeClient } from '../lib/realtime-api-beta/index.js';
 import { ItemType } from '../lib/realtime-api-beta/dist/lib/client.js';
 import { WavRecorder, WavStreamPlayer } from '../lib/wavtools/index.js';
-import { instructions } from '../utils/conversation_config.js';
 import { WavRenderer } from '../utils/wav_renderer';
 import { scenarios, getScenarioInstructions } from '../utils/scenario_config';
 
@@ -383,7 +382,7 @@ export function ConsolePage() {
     const client = clientRef.current;
 
     // Set instructions
-    client.updateSession({ instructions: instructions });
+    client.updateSession({ instructions: getScenarioInstructions(currentScenarioId) });
     // Set transcription, otherwise we don't get user transcriptions back
     client.updateSession({ input_audio_transcription: { model: 'whisper-1' } });
 
@@ -459,6 +458,33 @@ export function ConsolePage() {
         setMarker({ lat, lng, location, temperature, wind_speed });
         return json;
       },
+    );
+    client.addTool(
+      {
+        name: 'update_perception',
+        description: 'Update your current perception or thought about the interaction with the user',
+        parameters: {
+          type: 'object',
+          properties: {
+            key: {
+              type: 'string',
+              description: 'Key for the perception (use timestamp_perception_X where X is an incrementing number)',
+            },
+            value: {
+              type: 'string',
+              description: 'Your current thought or feeling about the interaction',
+            },
+          },
+          required: ['key', 'value'],
+        },
+      },
+      async ({ key, value }: { key: string; value: string }) => {
+        setMemoryKv((prev) => ({
+          ...prev,
+          [key]: value
+        }));
+        return { ok: true };
+      }
     );
 
     // handle realtime events from client + server for event logging
@@ -572,11 +598,21 @@ export function ConsolePage() {
             )}
           </div>
           <div className="border border-border/40 bg-background p-4">
-            <h3 className="font-medium mb-3">Set Memory</h3>
+            <h3 className="font-medium mb-3">AI Perceptions</h3>
             <div className="w-full h-40 bg-gray-50 border border-gray-100 p-4 overflow-auto">
-              <pre className="text-sm text-muted-foreground">
-                {JSON.stringify(memoryKv, null, 2)}
-              </pre>
+              <div className="space-y-2">
+                {Object.entries(memoryKv)
+                  .sort(([a], [b]) => {
+                    const aNum = parseInt(a.split('_').pop() || '0');
+                    const bNum = parseInt(b.split('_').pop() || '0');
+                    return bNum - aNum;
+                  })
+                  .map(([key, thought]) => (
+                    <div key={key} className="text-sm text-muted-foreground">
+                      • {thought}
+                    </div>
+                  ))}
+              </div>
             </div>
           </div>
         </div>
