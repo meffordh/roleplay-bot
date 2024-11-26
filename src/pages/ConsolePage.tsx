@@ -557,8 +557,8 @@ export function ConsolePage() {
         </div>
         <div className="space-y-6">
           <ScenarioCard 
-            currentInstructions={instructions} 
             currentScenarioId={currentScenarioId}
+            currentInstructions={getScenarioInstructions(currentScenarioId)} 
           />
           <div className="border border-border/40 bg-background p-4 relative z-10">
             <h3 className="font-medium mb-3">Map View</h3>
