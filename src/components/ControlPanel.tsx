@@ -31,18 +31,19 @@ export function ControlPanel({
         <Button 
           variant="outline" 
           size="sm" 
-          className="w-24 h-9"
+          className={`w-24 h-9 ${!canPushToTalk ? 'bg-primary text-primary-foreground' : ''}`}
           onClick={() => onVadToggle(canPushToTalk ? 'server_vad' : 'none')}
         >
-          VAD
+          VAD {!canPushToTalk ? 'ON' : 'OFF'}
         </Button>
         {isConnected && canPushToTalk && (
           <Button 
             variant="outline" 
             size="sm" 
-            className="w-48 h-9"
+            className={`w-48 h-9 ${isRecording ? 'bg-primary text-primary-foreground' : ''}`}
             onMouseDown={onStartRecording}
             onMouseUp={onStopRecording}
+            onMouseLeave={onStopRecording}
           >
             <Mic className="w-4 h-4 mr-2" />
             {isRecording ? 'Release to send' : 'Push to talk'}

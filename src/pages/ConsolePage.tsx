@@ -528,26 +528,24 @@ export function ConsolePage() {
       </NavBar>
 
       <div className="grid grid-cols-3 gap-6 p-6" style={{ height: "calc(100vh - 130px)" }}>
-        <div className="col-span-2 border border-border/40 bg-background">
-          <ChatTranscript 
-            items={items.filter(item => item.role)} 
-            onDeleteItem={deleteConversationItem} 
-          />
+        <div className="col-span-2 flex flex-col">
+          <div className="flex-1 border border-border/40 bg-background">
+            <ChatTranscript 
+              items={items.filter(item => item.role)} 
+              onDeleteItem={deleteConversationItem} 
+            />
+          </div>
         </div>
-        <canvas ref={clientCanvasRef} />
         <div className="space-y-6">
           <ScenarioCard currentInstructions={instructions} />
-          <canvas ref={serverCanvasRef} />
           <div className="border border-border/40 bg-background p-4">
             <h3 className="font-medium mb-3">Map View</h3>
             {coords && (
               <div className="w-full h-40 bg-gray-50 border border-gray-100">
-                <div className="w-full h-full">
-                  <LocationMap
-                    center={[coords.lat, coords.lng]}
-                    location={coords.location}
-                  />
-                </div>
+                <LocationMap
+                  center={[coords.lat, coords.lng]}
+                  location={coords.location}
+                />
               </div>
             )}
           </div>
