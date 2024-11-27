@@ -27,6 +27,7 @@ import { ChatTranscript } from '../components/ChatTranscript';
 import { ControlPanel } from '../components/ControlPanel';
 import { LibraryDialog } from '../components/LibraryDialog';
 import { SubmitDialog } from '../components/SubmitDialog';
+import { AIPerceptions } from '../components/AIPerceptions';
 
 // Icons
 import { Mic, Power, X, Zap } from 'react-feather';
@@ -126,7 +127,7 @@ export function ConsolePage() {
   const [isConnected, setIsConnected] = useState(false);
   const [canPushToTalk, setCanPushToTalk] = useState(true);
   const [isRecording, setIsRecording] = useState(false);
-  const [memoryKv, setMemoryKv] = useState<{ [key: string]: any }>({});
+  const [memoryKv, setMemoryKv] = useState<{ [key: string]: string }>({});
   const [coords, setCoords] = useState<Coordinates | null>({
     lat: 37.775593,
     lng: -122.418137,
@@ -554,24 +555,65 @@ export function ConsolePage() {
 
   // Update the scenario selection handler
   const handleScenarioSelect = useCallback(async (id: number) => {
-    const client = clientRef.current;
-    
-    // Disconnect current conversation
-    setIsConnected(false);
-    setRealtimeEvents([]);
-    setItems([]);
-    setMemoryKv({});
-    client.disconnect();
-    
-    // Update scenario
-    setCurrentScenarioId(id);
-    const instructions = getScenarioInstructions(id);
-    await client.updateSession({ instructions });
-    
-    // Reconnect with new scenario
-    client.connect();
-    setIsConnected(true);
-  }, []);
+    try {
+      const client = clientRef.current;
+      if (!client) return;
+      
+      // Disconnect current conversation if connected
+      if (isConnected) {
+        setIsConnected(false);
+        setRealtimeEvents([]);
+        setItems([]);
+        setMemoryKv({});
+        client.disconnect();
+      }
+      
+      // Update scenario
+      setCurrentScenarioId(id);
+      const instructions = getScenarioInstructions(id);
+      setCurrentInstructions(instructions);
+      
+      // Register the perception tool BEFORE connecting
+      client.addTool({
+        type: 'function',
+        name: 'update_perception',
+        description: 'Update your current perception or thought about the interaction with the user',
+        parameters: {
+          type: 'object',
+          properties: {
+            key: {
+              type: 'string',
+              description: 'Key for the perception (use timestamp_perception_X where X is an incrementing number)',
+            },
+            value: {
+              type: 'string',
+              description: 'Your current thought or feeling about the interaction',
+            },
+          },
+          required: ['key', 'value'],
+        }
+      }, async ({ key, value }: { key: string; value: string }) => {
+        setMemoryKv((prev) => ({
+          ...prev,
+          [key]: value
+        }));
+        return { ok: true };
+      });
+      
+      // Connect with new scenario
+      await client.connect();
+      
+      // Update session with instructions only
+      await client.updateSession({ 
+        instructions
+      });
+      
+      setIsConnected(true);
+    } catch (error) {
+      console.error('Error selecting scenario:', error);
+      setIsConnected(false);
+    }
+  }, [clientRef, isConnected]);
 
   // Add this handler function
   const handleDeleteItem = useCallback((id: string) => {
@@ -641,21 +683,12 @@ export function ConsolePage() {
               onDeleteItem={handleDeleteItem}
             />
           </div>
-          <div className="right-panel">
+          <div className="right-panel space-y-6">
             <ScenarioCard 
               currentScenarioId={currentScenarioId}
               currentInstructions={currentInstructions}
             />
-            <div className="map-view">
-              <div className="content">
-                {/* Map content */}
-              </div>
-            </div>
-            <div className="memory-view">
-              <div className="content">
-                {/* Memory content */}
-              </div>
-            </div>
+            <AIPerceptions perceptions={memoryKv} />
           </div>
         </div>
       </div>

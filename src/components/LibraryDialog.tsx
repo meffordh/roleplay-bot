@@ -33,8 +33,8 @@ export function LibraryDialog({ onSelect, currentScenarioId, children }: Library
                 onClick={() => onSelect(scenario.id)}
               >
                 <div className="flex flex-col items-start w-[90%]">
-                  <div className="font-semibold">{scenario.title}</div>
-                  <div className="text-sm text-muted-foreground break-words">
+                  <div className="font-semibold break-words">{scenario.title}</div>
+                  <div className="text-sm text-muted-foreground break-words whitespace-normal">
                     {scenario.description}
                   </div>
                 </div>
