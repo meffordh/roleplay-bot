@@ -12,7 +12,10 @@ const USE_LOCAL_RELAY_SERVER_URL: string | undefined =
 
 import { useEffect, useRef, useCallback, useState } from 'react';
 import { RealtimeClient } from '../lib/realtime-api-beta/index.js';
-import { ItemType } from '../lib/realtime-api-beta/dist/lib/client.js';
+import { 
+  ItemType, 
+  TurnDetectionServerVadType 
+} from '../lib/realtime-api-beta/dist/lib/client.js';
 import { WavRecorder, WavStreamPlayer } from '../lib/wavtools/index.js';
 import { WavRenderer } from '../utils/wav_renderer';
 import { scenarios, getScenarioInstructions } from '../utils/scenario_config';
@@ -259,20 +262,28 @@ export function ConsolePage() {
   /**
    * Switch between Manual <> VAD mode for communication
    */
-  const changeTurnEndType = async (value: string) => {
+  const changeTurnEndType = useCallback((type: 'server_vad' | 'client_vad') => {
     const client = clientRef.current;
-    const wavRecorder = wavRecorderRef.current;
-    if (value === 'none' && wavRecorder.getStatus() === 'recording') {
-      await wavRecorder.pause();
+    if (!client) return;
+    
+    try {
+      const turnDetection: TurnDetectionServerVadType | null = type === 'server_vad' 
+        ? { 
+            type: "server_vad" as const,
+            threshold: 0.6,
+            prefix_padding_ms: 500,
+            silence_duration_ms: 700
+          } 
+        : null;
+      
+      client.updateSession({ 
+        turn_detection: turnDetection
+      });
+      setCanPushToTalk(type === 'client_vad');
+    } catch (error) {
+      console.error('Error changing VAD mode:', error);
     }
-    client.updateSession({
-      turn_detection: value === 'none' ? null : { type: 'server_vad' },
-    });
-    if (value === 'server_vad' && client.isConnected()) {
-      await wavRecorder.record((data) => client.appendInputAudio(data.mono));
-    }
-    setCanPushToTalk(value === 'none');
-  };
+  }, []);
 
   /**
    * Auto-scroll the event logs
@@ -562,56 +573,87 @@ export function ConsolePage() {
     setIsConnected(true);
   }, []);
 
+  // Add this handler function
+  const handleDeleteItem = useCallback((id: string) => {
+    const client = clientRef.current;
+    if (!client) return;
+    client.deleteItem(id);
+  }, [clientRef]);
+
+  // Update the handleLibrarySelect to also set instructions
+  const handleLibrarySelect = useCallback(async (id: number) => {
+    const client = clientRef.current;
+    if (!client) return;
+    
+    // Update scenario
+    setCurrentScenarioId(id);
+    const instructions = getScenarioInstructions(id);
+    setCurrentInstructions(instructions);
+    
+    // Update session with new instructions
+    await client.updateSession({ instructions });
+  }, []);
+
+  // Add after other state declarations (around line 131)
+  const [currentInstructions, setCurrentInstructions] = useState<string>(getScenarioInstructions(1));
+  const [isLoading, setIsLoading] = useState(false);
+  const [vadMode, setVadMode] = useState<'client' | 'server'>('client');
+
+  useEffect(() => {
+    const client = clientRef.current;
+    if (!client) return;
+
+    const handleConnectionError = (error: any) => {
+      console.error('WebSocket connection error:', error);
+      setIsConnected(false);
+      setIsLoading(false);
+    };
+
+    const handleConnectionClose = () => {
+      setIsConnected(false);
+      setIsLoading(false);
+    };
+
+    client.on('connection.error', handleConnectionError);
+    client.on('connection.close', handleConnectionClose);
+
+    return () => {
+      client.off('connection.error', handleConnectionError);
+      client.off('connection.close', handleConnectionClose);
+    };
+  }, []);
+
   /**
    * Render the application
    */
   return (
-    <div className="flex flex-col h-screen bg-white">
+    <div data-component="ConsolePage">
       <NavBar 
         onLibrarySelect={handleScenarioSelect}
         currentScenarioId={currentScenarioId}
       />
-
-      <div className="grid grid-cols-3 gap-6 p-6 h-[calc(100vh-130px)]">
-        <div className="col-span-2">
-          <div className="h-full border border-border/40 bg-background">
+      
+      <div className="main-content">
+        <div className="grid-layout">
+          <div className="chat-container">
             <ChatTranscript 
-              items={items.filter(item => item.role)} 
-              onDeleteItem={deleteConversationItem} 
+              items={items} 
+              onDeleteItem={handleDeleteItem}
             />
           </div>
-        </div>
-        <div className="space-y-6">
-          <ScenarioCard 
-            currentScenarioId={currentScenarioId}
-            currentInstructions={getScenarioInstructions(currentScenarioId)} 
-          />
-          <div className="border border-border/40 bg-background p-4 relative z-10">
-            <h3 className="font-medium mb-3">Map View</h3>
-            {coords && (
-              <div className="relative w-full h-[300px] z-0">
-                <LocationMap
-                  center={[coords.lat, coords.lng]}
-                  location={coords.location}
-                />
+          <div className="right-panel">
+            <ScenarioCard 
+              currentScenarioId={currentScenarioId}
+              currentInstructions={currentInstructions}
+            />
+            <div className="map-view">
+              <div className="content">
+                {/* Map content */}
               </div>
-            )}
-          </div>
-          <div className="border border-border/40 bg-background p-4">
-            <h3 className="font-medium mb-3">AI Perceptions</h3>
-            <div className="w-full h-40 bg-gray-50 border border-gray-100 p-4 overflow-auto">
-              <div className="space-y-2">
-                {Object.entries(memoryKv)
-                  .sort(([a], [b]) => {
-                    const aNum = parseInt(a.split('_').pop() || '0');
-                    const bNum = parseInt(b.split('_').pop() || '0');
-                    return bNum - aNum;
-                  })
-                  .map(([key, thought]) => (
-                    <div key={key} className="text-sm text-muted-foreground">
-                      • {thought}
-                    </div>
-                  ))}
+            </div>
+            <div className="memory-view">
+              <div className="content">
+                {/* Memory content */}
               </div>
             </div>
           </div>
