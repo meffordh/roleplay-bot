@@ -561,21 +561,25 @@ export function ConsolePage() {
       
       // Disconnect current conversation if connected
       if (isConnected) {
-        setIsConnected(false);
-        setRealtimeEvents([]);
-        setItems([]);
-        setMemoryKv({});
-        client.disconnect();
+        await disconnectConversation();
       }
       
-      // Update scenario
+      // Update scenario state
       setCurrentScenarioId(id);
       const instructions = getScenarioInstructions(id);
       setCurrentInstructions(instructions);
       
-      // Register the perception tool BEFORE connecting
+      // Update session config before connecting
+      client.updateSession({ 
+        instructions,
+        modalities: ['text', 'audio'],
+        voice: 'alloy',
+        input_audio_format: 'pcm16',
+        output_audio_format: 'pcm16'
+      });
+
+      // Register the perception tool
       client.addTool({
-        type: 'function',
         name: 'update_perception',
         description: 'Update your current perception or thought about the interaction with the user',
         parameters: {
@@ -599,21 +603,15 @@ export function ConsolePage() {
         }));
         return { ok: true };
       });
-      
-      // Connect with new scenario
-      await client.connect();
-      
-      // Update session with instructions only
-      await client.updateSession({ 
-        instructions
-      });
-      
-      setIsConnected(true);
+
+      // Connect with new configuration
+      await connectConversation();
+
     } catch (error) {
       console.error('Error selecting scenario:', error);
       setIsConnected(false);
     }
-  }, [clientRef, isConnected]);
+  }, [clientRef, isConnected, disconnectConversation, connectConversation]);
 
   // Add this handler function
   const handleDeleteItem = useCallback((id: string) => {
@@ -623,18 +621,6 @@ export function ConsolePage() {
   }, [clientRef]);
 
   // Update the handleLibrarySelect to also set instructions
-  const handleLibrarySelect = useCallback(async (id: number) => {
-    const client = clientRef.current;
-    if (!client) return;
-    
-    // Update scenario
-    setCurrentScenarioId(id);
-    const instructions = getScenarioInstructions(id);
-    setCurrentInstructions(instructions);
-    
-    // Update session with new instructions
-    await client.updateSession({ instructions });
-  }, []);
 
   // Add after other state declarations (around line 131)
   const [currentInstructions, setCurrentInstructions] = useState<string>(getScenarioInstructions(1));
