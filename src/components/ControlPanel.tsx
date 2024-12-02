@@ -5,6 +5,7 @@ import { VoiceVisualization } from './VoiceVisualization';
 interface ControlPanelProps {
   isConnected: boolean;
   isRecording: boolean;
+  isTranscribing: boolean;
   canPushToTalk: boolean;
   onVadToggle: (type: 'server_vad' | 'client_vad') => void;
   onStartRecording: () => void;
@@ -17,6 +18,7 @@ interface ControlPanelProps {
 export function ControlPanel({
   isConnected,
   isRecording,
+  isTranscribing,
   canPushToTalk,
   onVadToggle,
   onStartRecording,

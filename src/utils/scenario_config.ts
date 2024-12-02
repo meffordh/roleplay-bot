@@ -11,11 +11,16 @@ export interface Scenario {
 
 const baseToolInstructions = `
 Tool Usage Instructions:
-- Use the update_perception tool to record your thoughts about the interaction
-- Format the key as "perception_X" where X increments with each perception (e.g. "perception_1")
-- The value should be your current thought or feeling (e.g. "User seems genuinely concerned about my wellbeing")
-- Call this tool whenever your perception of the user or situation changes
-- Update your perceptions frequently to track the progression of the interaction`;
+- Use update_perception tool frequently to track your understanding of the interaction
+- Call update_perception after each significant user message or when your perception changes
+- Format the key as "perception_X" where X increments with each perception
+- The value should capture your interpretation of:
+  * User's emotional state
+  * User's communication approach
+  * Changes in rapport
+  * Your reaction to their statements
+- Make these perception updates silently (don't mention them in conversation)
+- Focus on capturing subtle changes in the interaction`;
 
 export const scenarios: Scenario[] = [
   {
