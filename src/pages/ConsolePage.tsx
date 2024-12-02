@@ -133,7 +133,6 @@ export function ConsolePage() {
     lng: -122.418137,
   });
   const [marker, setMarker] = useState<Coordinates | null>(null);
-  const [isTranscribing, setIsTranscribing] = useState(false);
 
   /**
    * Utility for formatting the timing of logs
@@ -264,20 +263,12 @@ export function ConsolePage() {
   /**
    * Switch between Manual <> VAD mode for communication
    */
-  const changeTurnEndType = useCallback(async (type: 'server_vad' | 'client_vad') => {
+  const changeTurnEndType = useCallback((type: 'server_vad' | 'client_vad') => {
     const client = clientRef.current;
     if (!client) return;
     
     try {
-      const wavRecorder = wavRecorderRef.current;
-      
-      // Stop current recording if any
-      if (isRecording) {
-        await wavRecorder.pause();
-        setIsRecording(false);
-      }
-      
-      const turnDetection = type === 'server_vad' 
+      const turnDetection: TurnDetectionServerVadType | null = type === 'server_vad' 
         ? { 
             type: "server_vad" as const,
             threshold: 0.6,
@@ -286,34 +277,14 @@ export function ConsolePage() {
           } 
         : null;
       
-      // Update session with VAD and transcription configuration
-      await client.updateSession({ 
-        turn_detection: turnDetection,
-        input_audio_transcription: {
-          enabled: true,
-          model: 'whisper-1'
-        }
+      client.updateSession({ 
+        turn_detection: turnDetection
       });
-
-      // Handle recording state based on VAD mode
-      if (type === 'server_vad') {
-        setIsTranscribing(true);
-        setVadMode('server');
-        await wavRecorder.record((data) => client.appendInputAudio(data.mono));
-      } else {
-        setIsTranscribing(false);
-        setVadMode('client');
-        await wavRecorder.pause();
-      }
-      
       setCanPushToTalk(type === 'client_vad');
     } catch (error) {
       console.error('Error changing VAD mode:', error);
-      setCanPushToTalk(true);
-      setVadMode('client');
-      setIsTranscribing(false);
     }
-  }, [clientRef, wavRecorderRef, isRecording]);
+  }, []);
 
   /**
    * Auto-scroll the event logs
@@ -608,6 +579,30 @@ export function ConsolePage() {
       });
 
       // Register the perception tool
+      client.addTool({
+        name: 'update_perception',
+        description: 'Update your current perception or thought about the interaction with the user',
+        parameters: {
+          type: 'object',
+          properties: {
+            key: {
+              type: 'string',
+              description: 'Key for the perception (use timestamp_perception_X where X is an incrementing number)',
+            },
+            value: {
+              type: 'string',
+              description: 'Your current thought or feeling about the interaction',
+            },
+          },
+          required: ['key', 'value'],
+        }
+      }, async ({ key, value }: { key: string; value: string }) => {
+        setMemoryKv((prev) => ({
+          ...prev,
+          [key]: value
+        }));
+        return { ok: true };
+      });
 
       // Connect with new configuration
       await connectConversation();
@@ -624,14 +619,6 @@ export function ConsolePage() {
     if (!client) return;
     client.deleteItem(id);
   }, [clientRef]);
-
-  const handleDisconnect = useCallback(async () => {
-    if (isConnected) {
-      await disconnectConversation();
-    } else {
-      await connectConversation();
-    }
-  }, [isConnected, disconnectConversation, connectConversation]);
 
   // Update the handleLibrarySelect to also set instructions
 
@@ -674,34 +661,35 @@ export function ConsolePage() {
         currentScenarioId={currentScenarioId}
       />
       
-      <div className="flex-1 container py-4 grid gap-4 grid-cols-[1fr_300px] overflow-hidden">
-        <div className="flex flex-col overflow-hidden">
-          <ChatTranscript 
-            items={items}
-            onDeleteItem={handleDeleteItem}
-          />
-          <ControlPanel
-            isConnected={isConnected}
-            isRecording={isRecording}
-            isTranscribing={isTranscribing}
-            canPushToTalk={canPushToTalk}
-            onVadToggle={changeTurnEndType}
-            onStartRecording={startRecording}
-            onStopRecording={stopRecording}
-            onDisconnect={handleDisconnect}
-            clientCanvasRef={clientCanvasRef}
-            serverCanvasRef={serverCanvasRef}
-          />
-        </div>
-        
-        <div className="space-y-4">
-          <ScenarioCard
-            currentScenarioId={currentScenarioId}
-            currentInstructions={currentInstructions}
-          />
-          <AIPerceptions perceptions={memoryKv} />
+      <div className="main-content">
+        <div className="grid-layout">
+          <div className="chat-container">
+            <ChatTranscript 
+              items={items} 
+              onDeleteItem={handleDeleteItem}
+            />
+          </div>
+          <div className="right-panel space-y-6">
+            <ScenarioCard 
+              currentScenarioId={currentScenarioId}
+              currentInstructions={currentInstructions}
+            />
+            <AIPerceptions perceptions={memoryKv} />
+          </div>
         </div>
       </div>
+
+      <ControlPanel 
+        isConnected={isConnected}
+        isRecording={isRecording}
+        canPushToTalk={canPushToTalk}
+        onVadToggle={changeTurnEndType}
+        onStartRecording={startRecording}
+        onStopRecording={stopRecording}
+        onDisconnect={isConnected ? disconnectConversation : connectConversation}
+        clientCanvasRef={clientCanvasRef}
+        serverCanvasRef={serverCanvasRef}
+      />
     </div>
   );
 }

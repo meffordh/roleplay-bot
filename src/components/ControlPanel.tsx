@@ -5,7 +5,6 @@ import { VoiceVisualization } from './VoiceVisualization';
 interface ControlPanelProps {
   isConnected: boolean;
   isRecording: boolean;
-  isTranscribing: boolean;
   canPushToTalk: boolean;
   onVadToggle: (type: 'server_vad' | 'client_vad') => void;
   onStartRecording: () => void;
@@ -18,7 +17,6 @@ interface ControlPanelProps {
 export function ControlPanel({
   isConnected,
   isRecording,
-  isTranscribing,
   canPushToTalk,
   onVadToggle,
   onStartRecording,
@@ -28,9 +26,9 @@ export function ControlPanel({
   serverCanvasRef
 }: ControlPanelProps) {
   return (
-    <div className="fixed bottom-0 left-0 right-0 bg-gray-900">
-      <div className="container mx-auto">
-        <div className="border-t border-border/40">
+    <div className="control-panel-container">
+      <div className="control-panel-content">
+        <div className="border-t border-border/40 bg-gray-900 text-white">
           <div className="flex items-center justify-between w-full px-6 py-4">
             <Button 
               variant="outline" 
@@ -89,6 +87,9 @@ export function ControlPanel({
             </div>
           </div>
         </div>
+      </div>
+      <div className="voice-visualization">
+        {/* Voice visualization content */}
       </div>
     </div>
   );
