@@ -608,30 +608,6 @@ export function ConsolePage() {
       });
 
       // Register the perception tool
-      client.addTool({
-        name: 'update_perception',
-        description: 'Update your current perception or thought about the interaction with the user',
-        parameters: {
-          type: 'object',
-          properties: {
-            key: {
-              type: 'string',
-              description: 'Key for the perception (use timestamp_perception_X where X is an incrementing number)',
-            },
-            value: {
-              type: 'string',
-              description: 'Your current thought or feeling about the interaction',
-            },
-          },
-          required: ['key', 'value'],
-        }
-      }, async ({ key, value }: { key: string; value: string }) => {
-        setMemoryKv((prev) => ({
-          ...prev,
-          [key]: value
-        }));
-        return { ok: true };
-      });
 
       // Connect with new configuration
       await connectConversation();
