@@ -41,7 +41,7 @@ export function SubmitDialog({ children, items, currentScenario }: SubmitDialogP
     
     try {
       const conversation = formatConversation(items);
-      console.log('Formatted conversation:', conversation); // Debug log
+      console.log('Formatted conversation:', conversation);
       
       const payload = {
         email,
@@ -49,8 +49,6 @@ export function SubmitDialog({ children, items, currentScenario }: SubmitDialogP
         scenario: currentScenario.title,
         scenarioInstructions: currentScenario.instruction
       };
-
-      console.log('Sending payload:', payload); // Debug log
 
       const response = await fetch('https://7os5kk.buildship.run/roleplaySubmission-90ae71898f74', {
         method: 'POST',
@@ -60,44 +58,22 @@ export function SubmitDialog({ children, items, currentScenario }: SubmitDialogP
         body: JSON.stringify(payload)
       });
 
-      const rawData = await response.text(); // Get raw response text
-      console.log('Raw response:', rawData); // Debug log
+      const data = await response.json();
+      console.log('Response data:', data);
 
-      let data;
-      try {
-        data = JSON.parse(rawData);
-      } catch (parseError) {
-        console.error('JSON parse error:', parseError);
-        throw new Error('Invalid response format from server');
-      }
-
-      console.log('Parsed response:', data); // Debug log
-      
-      if (!response.ok) {
-        throw new Error(data.error || 'Server returned an error');
-      }
-
-      if (typeof data === 'string') {
-        try {
-          data = JSON.parse(data);
-        } catch (parseError) {
-          console.error('Second JSON parse error:', parseError);
-        }
-      }
-
-      if (!data || typeof data !== 'object' || !data.score || !data.feedback) {
-        console.error('Invalid response structure:', data);
-        throw new Error('Invalid response format from server');
+      // Simple check for required fields
+      if (!data || !data.score || !data.feedback) {
+        throw new Error('Invalid response from server');
       }
 
       setResponse({
-        score: String(data.score),
-        feedback: String(data.feedback)
+        score: data.score,
+        feedback: data.feedback
       });
       setError(null);
     } catch (err) {
-      console.error('Submission error:', err); // Debug log
-      setError(err instanceof Error ? err.message : 'An error occurred');
+      console.error('Submission error:', err);
+      setError(err instanceof Error ? err.message : 'An error occurred while submitting');
       setResponse(null);
     } finally {
       setIsSubmitting(false);
