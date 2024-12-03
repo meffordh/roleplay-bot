@@ -28,9 +28,10 @@ import { ControlPanel } from '../components/ControlPanel';
 import { LibraryDialog } from '../components/LibraryDialog';
 import { SubmitDialog } from '../components/SubmitDialog';
 import { AIPerceptions } from '../components/AIPerceptions';
+import { Button } from '../components/ui/button';
 
 // Icons
-import { Mic, Power, X, Zap } from 'react-feather';
+import { Mic, Power, X, Zap, Send } from 'lucide-react';
 
 import './ConsolePage.scss';
 import { isJsxOpeningLikeElement } from 'typescript';
@@ -686,6 +687,18 @@ You can and should make these updates while also responding verbally to the user
               currentInstructions={currentInstructions}
             />
             <AIPerceptions perceptions={memoryKv} />
+            <SubmitDialog
+              items={items}
+              currentScenario={{
+                title: scenarios.find(s => s.id === currentScenarioId)?.title || '',
+                instruction: currentInstructions
+              }}
+            >
+              <Button variant="outline" size="sm" className="w-full">
+                <Send className="w-4 h-4 mr-2" />
+                Submit Conversation
+              </Button>
+            </SubmitDialog>
           </div>
         </div>
       </div>
