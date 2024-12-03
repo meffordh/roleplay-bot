@@ -13,7 +13,7 @@ interface SubmitDialogProps {
 }
 
 interface SubmissionResponse {
-  score: number;
+  score: string;
   feedback: string;
 }
 
@@ -25,9 +25,11 @@ export function SubmitDialog({ children, items, currentScenario }: SubmitDialogP
 
   const formatConversation = (items: any[]): string => {
     return items
+      .filter(item => item.content?.text || item.formatted?.text) // Filter out empty messages
       .map(item => {
         const role = item.role === 'assistant' ? 'AI' : 'User';
-        const content = item.content?.text || item.content || '';
+        // Try different possible locations for the text content
+        const content = item.content?.text || item.formatted?.text || item.content || '';
         return `${role}: ${content}`;
       })
       .join('\n');
@@ -38,12 +40,17 @@ export function SubmitDialog({ children, items, currentScenario }: SubmitDialogP
     setError(null);
     
     try {
+      const conversation = formatConversation(items);
+      console.log('Formatted conversation:', conversation); // Debug log
+      
       const payload = {
         email,
-        conversation: formatConversation(items),
+        conversation,
         scenario: currentScenario.title,
         scenarioInstructions: currentScenario.instruction
       };
+
+      console.log('Sending payload:', payload); // Debug log
 
       const response = await fetch('https://7os5kk.buildship.run/roleplaySubmission-90ae71898f74', {
         method: 'POST',
@@ -53,14 +60,45 @@ export function SubmitDialog({ children, items, currentScenario }: SubmitDialogP
         body: JSON.stringify(payload)
       });
 
-      if (!response.ok) {
-        throw new Error('Failed to submit conversation');
+      const rawData = await response.text(); // Get raw response text
+      console.log('Raw response:', rawData); // Debug log
+
+      let data;
+      try {
+        data = JSON.parse(rawData);
+      } catch (parseError) {
+        console.error('JSON parse error:', parseError);
+        throw new Error('Invalid response format from server');
       }
 
-      const data = await response.json();
-      setResponse(data);
+      console.log('Parsed response:', data); // Debug log
+      
+      if (!response.ok) {
+        throw new Error(data.error || 'Server returned an error');
+      }
+
+      if (typeof data === 'string') {
+        try {
+          data = JSON.parse(data);
+        } catch (parseError) {
+          console.error('Second JSON parse error:', parseError);
+        }
+      }
+
+      if (!data || typeof data !== 'object' || !data.score || !data.feedback) {
+        console.error('Invalid response structure:', data);
+        throw new Error('Invalid response format from server');
+      }
+
+      setResponse({
+        score: String(data.score),
+        feedback: String(data.feedback)
+      });
+      setError(null);
     } catch (err) {
+      console.error('Submission error:', err); // Debug log
       setError(err instanceof Error ? err.message : 'An error occurred');
+      setResponse(null);
     } finally {
       setIsSubmitting(false);
     }
@@ -108,7 +146,10 @@ export function SubmitDialog({ children, items, currentScenario }: SubmitDialogP
               </div>
               <Button
                 variant="outline"
-                onClick={() => setResponse(null)}
+                onClick={() => {
+                  setResponse(null);
+                  setError(null);
+                }}
               >
                 Close
               </Button>
