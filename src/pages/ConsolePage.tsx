@@ -210,7 +210,6 @@ export function ConsolePage() {
     setIsConnected(false);
     setRealtimeEvents([]);
     setItems([]);
-    setMemoryKv({});
     setCoords({
       lat: 37.775593,
       lng: -122.418137,
@@ -474,26 +473,24 @@ export function ConsolePage() {
     client.addTool(
       {
         name: 'update_perception',
-        description: 'Update your current perception or thought about the interaction with the user',
+        description: 'Update your current perception or thought about the interaction with the user. This should be called frequently to maintain an ongoing record of your thoughts about the conversation.',
         parameters: {
           type: 'object',
           properties: {
-            key: {
-              type: 'string',
-              description: 'Key for the perception (use timestamp_perception_X where X is an incrementing number)',
-            },
-            value: {
+            perception: {
               type: 'string',
               description: 'Your current thought or feeling about the interaction',
-            },
+            }
           },
-          required: ['key', 'value'],
+          required: ['perception'],
         },
       },
-      async ({ key, value }: { key: string; value: string }) => {
+      async ({ perception }: { perception: string }) => {
+        const timestamp = new Date().toISOString();
+        const key = `${timestamp}_perception_${Math.random().toString(36).substr(2, 9)}`;
         setMemoryKv((prev) => ({
           ...prev,
-          [key]: value
+          [key]: perception
         }));
         return { ok: true };
       }
@@ -581,25 +578,23 @@ export function ConsolePage() {
       // Register the perception tool
       client.addTool({
         name: 'update_perception',
-        description: 'Update your current perception or thought about the interaction with the user',
+        description: 'Update your current perception or thought about the interaction with the user. This should be called frequently to maintain an ongoing record of your thoughts about the conversation.',
         parameters: {
           type: 'object',
           properties: {
-            key: {
-              type: 'string',
-              description: 'Key for the perception (use timestamp_perception_X where X is an incrementing number)',
-            },
-            value: {
+            perception: {
               type: 'string',
               description: 'Your current thought or feeling about the interaction',
-            },
+            }
           },
-          required: ['key', 'value'],
+          required: ['perception'],
         }
-      }, async ({ key, value }: { key: string; value: string }) => {
+      }, async ({ perception }: { perception: string }) => {
+        const timestamp = new Date().toISOString();
+        const key = `${timestamp}_perception_${Math.random().toString(36).substr(2, 9)}`;
         setMemoryKv((prev) => ({
           ...prev,
-          [key]: value
+          [key]: perception
         }));
         return { ok: true };
       });

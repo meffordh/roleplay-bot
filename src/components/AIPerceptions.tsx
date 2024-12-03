@@ -6,8 +6,8 @@ interface AIPerceptionsProps {
 
 export function AIPerceptions({ perceptions }: AIPerceptionsProps) {
   const perceptionEntries = Object.entries(perceptions)
-    .filter(([key]) => key.startsWith('perception_'))
-    .sort((a, b) => a[0].localeCompare(b[0]));
+    .filter(([key]) => key.includes('perception_'))
+    .sort((a, b) => b[0].localeCompare(a[0]));
 
   if (perceptionEntries.length === 0) {
     return null;
@@ -21,7 +21,7 @@ export function AIPerceptions({ perceptions }: AIPerceptionsProps) {
       <div className="p-4">
         <div className="space-y-2">
           {perceptionEntries.map(([key, value]) => (
-            <div key={key} className="text-sm text-muted-foreground">
+            <div key={key} className="text-sm text-muted-foreground p-2 bg-gray-50 rounded">
               {value}
             </div>
           ))}
