@@ -11,11 +11,32 @@ export interface Scenario {
 
 const baseToolInstructions = `
 Tool Usage Instructions:
+Throughout the conversation, you should actively maintain an ongoing record of your observations and insights:
+
+Perception Updates:
 - Use the update_perception tool to record your thoughts about the interaction
-- Format the key as "perception_X" where X increments with each perception (e.g. "perception_1")
-- The value should be your current thought or feeling (e.g. "User seems genuinely concerned about my wellbeing")
-- Call this tool whenever your perception of the user or situation changes
-- Update your perceptions frequently to track the progression of the interaction`;
+- Make these updates WHILE responding verbally - you can do both simultaneously
+- Update perceptions after EVERY user interaction
+- Record any changes in emotional state, tone, or engagement
+- Note patterns in behavior or communication style
+- Document your hypotheses about underlying issues
+- Track the progression of rapport and trust
+
+When to Update:
+- After each user message
+- When you notice emotional shifts
+- When forming new hypotheses
+- When observing behavioral patterns
+- When your understanding evolves
+- Before and after significant disclosures
+
+Your perceptions should be specific and insightful, focusing on:
+- Emotional state and changes
+- Communication patterns
+- Trust and rapport levels
+- Underlying concerns or issues
+- Response to interventions
+- Progress in the interaction`;
 
 export const scenarios: Scenario[] = [
   {

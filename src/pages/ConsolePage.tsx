@@ -473,13 +473,21 @@ export function ConsolePage() {
     client.addTool(
       {
         name: 'update_perception',
-        description: 'Update your current perception or thought about the interaction with the user. This should be called frequently to maintain an ongoing record of your thoughts about the conversation.',
+        description: `Update your current perception or thought about the interaction with the user. 
+You should proactively call this tool:
+- After each user interaction
+- When you notice changes in user's emotional state
+- When you form new hypotheses about the user
+- When you observe patterns in user behavior
+- Whenever your understanding of the situation evolves
+
+You can and should make these updates while also responding verbally to the user.`,
         parameters: {
           type: 'object',
           properties: {
             perception: {
               type: 'string',
-              description: 'Your current thought or feeling about the interaction',
+              description: 'Your current thought, observation, or insight about the interaction. Be specific and insightful.',
             }
           },
           required: ['perception'],
@@ -578,17 +586,25 @@ export function ConsolePage() {
       // Register the perception tool
       client.addTool({
         name: 'update_perception',
-        description: 'Update your current perception or thought about the interaction with the user. This should be called frequently to maintain an ongoing record of your thoughts about the conversation.',
+        description: `Update your current perception or thought about the interaction with the user. 
+You should proactively call this tool:
+- After each user interaction
+- When you notice changes in user's emotional state
+- When you form new hypotheses about the user
+- When you observe patterns in user behavior
+- Whenever your understanding of the situation evolves
+
+You can and should make these updates while also responding verbally to the user.`,
         parameters: {
           type: 'object',
           properties: {
             perception: {
               type: 'string',
-              description: 'Your current thought or feeling about the interaction',
+              description: 'Your current thought, observation, or insight about the interaction. Be specific and insightful.',
             }
           },
           required: ['perception'],
-        }
+        },
       }, async ({ perception }: { perception: string }) => {
         const timestamp = new Date().toISOString();
         const key = `${timestamp}_perception_${Math.random().toString(36).substr(2, 9)}`;
