@@ -1,7 +1,6 @@
 import { Button } from './ui/button';
-import { Library, Send } from 'lucide-react';
+import { Library } from 'lucide-react';
 import { LibraryDialog } from './LibraryDialog';
-import { SubmitDialog } from './SubmitDialog';
 
 interface NavBarProps {
   onLibrarySelect: (id: number) => void;
@@ -25,12 +24,6 @@ export function NavBar({ onLibrarySelect, currentScenarioId }: NavBarProps) {
               Library
             </Button>
           </LibraryDialog>
-          <SubmitDialog>
-            <Button variant="outline" size="sm" className="border-emerald-200 bg-emerald-600 text-white hover:bg-emerald-700">
-              <Send className="w-4 h-4 mr-2" />
-              Submit
-            </Button>
-          </SubmitDialog>
         </div>
       </div>
     </header>
